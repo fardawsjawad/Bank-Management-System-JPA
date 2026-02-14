@@ -8,11 +8,14 @@ import com.bankapp.exception.service_exceptions.user_role.UserRoleException;
 import com.bankapp.exception.service_exceptions.user_role.UserRoleNotFoundException;
 import com.bankapp.exception.service_exceptions.user_service.UserNotFoundException;
 import com.bankapp.model.Role;
+import com.bankapp.model.User;
 import com.bankapp.model.UserRole;
 import com.bankapp.service.UserRoleService;
+import com.bankapp.util.JPAUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 
-import java.sql.Connection;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -28,26 +31,25 @@ public class UserRoleServiceImpl implements UserRoleService {
 
     @Override
     public Long createUserRole(UserRole userRole) {
-        if (userRole == null) {
-            throw new InvalidUserRoleDataException("userRole must not be null");
+
+        if (userRole == null || userRole.getUser() == null) {
+            throw new InvalidUserRoleDataException("UserRole or User cannot be null");
         }
 
-        if (userRole.getUserId() == null) {
-            throw new InvalidUserRoleDataException("userId must not be null");
+        Optional<User> userOptional = userDAO.getUserById(
+                userRole.getUser().getUserId()
+        );
+
+        if (!userOptional.isPresent()) {
+            throw new UserNotFoundException("User not found");
         }
 
-        if (!userDAO.userExistsByUserId(userRole.getUserId())) {
-            throw new UserNotFoundException("User with ID: " + userRole.getUserId() + " does not exist");
-        }
+        User user = userOptional.get();
 
         userRole.setUserRole(Role.USER);
+        userRole.setUser(user);
 
-        Long  userRoleId = userRoleDAO.createUserRole(userRole);
-        if (userRoleId == null) {
-            throw new UserRoleCreationException("Failed to create user role");
-        }
-
-        return userRoleId;
+        return userRoleDAO.createUserRole(userRole);
     }
 
     @Override
@@ -74,40 +76,47 @@ public class UserRoleServiceImpl implements UserRoleService {
     }
 
     @Override
-    public boolean updateRole(UserRole userRole) {
-        if (userRole == null) {
+    public boolean updateRole(UserRole updatedUserRole) {
+        if (updatedUserRole == null) {
             throw new InvalidUserRoleDataException("userRole must not be null");
         }
 
-        if (userRole.getRoleId() == null) {
+        if (updatedUserRole.getRoleId() == null) {
             throw new InvalidUserRoleDataException("roleId must not be null");
         }
 
-        if (userRole.getUserId() == null) {
+        if (updatedUserRole.getUser() == null || updatedUserRole.getUser().getUserId() == null) {
             throw new InvalidUserRoleDataException("userId must not be null");
         }
 
-        if (!userDAO.userExistsByUserId(userRole.getUserId())) {
-            throw new UserNotFoundException("User with ID: " + userRole.getUserId() + " does not exist");
+        if (updatedUserRole.getUserRole() == null) {
+            throw new InvalidUserRoleDataException("Role must not be null");
         }
 
+        Long userId = updatedUserRole.getUser().getUserId();
 
-        UserRole currentRole = userRoleDAO.getRoleById(userRole.getRoleId())
+        if (!userDAO.userExistsByUserId(userId)) {
+            throw new UserNotFoundException("User with ID: " + userId + " does not exist");
+        }
+
+        UserRole currentRole = userRoleDAO.getRoleById(updatedUserRole.getRoleId())
                 .orElseThrow(() ->
                         new UserRoleNotFoundException(
-                                "Role with ID: " + userRole.getRoleId() + " does not exist"
+                                "Role with ID: " + updatedUserRole.getRoleId() + " does not exist"
                         )
                 );
 
-        if (currentRole.getUserRole().equals(userRole.getUserRole())) {
+        if (currentRole.getUserRole().equals(updatedUserRole.getUserRole())) {
             throw new UserRoleException(
-                    "Current user role is already " + userRole.getUserRole()
+                    "Current user role is already " + updatedUserRole.getUserRole()
             );
         }
 
-        boolean success = userRoleDAO.updateRole(userRole);
-        if (!success) {
-            throw new UserRoleException("Failed to update user role");
+        boolean updated = userRoleDAO.updateRole(updatedUserRole);
+        if (!updated) {
+            throw new UserRoleException(
+                    "Failed to update user role"
+            );
         }
 
         return true;
@@ -115,26 +124,22 @@ public class UserRoleServiceImpl implements UserRoleService {
 
     @Override
     public boolean deleteRole(Long roleId) {
+
         if (roleId == null) {
             throw new InvalidUserRoleDataException("roleId must not be null");
         }
 
-        UserRole currentRole = userRoleDAO.getRoleById(roleId)
-                .orElseThrow(() ->
-                        new UserRoleNotFoundException(
-                                "Role with ID: " + roleId + " does not exist"
-                        )
-                );
 
-        if (currentRole.getUserRole().equals(Role.ADMIN)) {
+        Optional<UserRole> currentRoleOptional = userRoleDAO.getRoleById(roleId);
+
+        if (!currentRoleOptional.isPresent()) {
+                throw new UserRoleNotFoundException("Role with ID: " + roleId + " does not exist");
+            }
+
+        if (currentRoleOptional.get().getUserRole().equals(Role.ADMIN)) {
             throw new UserRoleException("Cannot delete admin role");
         }
 
-        boolean success = userRoleDAO.deleteRole(roleId);
-        if (!success) {
-            throw new UserRoleException("Failed to delete user role");
-        }
-
-        return true;
+        return userRoleDAO.deleteRole(roleId);
     }
 }

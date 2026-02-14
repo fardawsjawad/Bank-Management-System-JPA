@@ -1,4 +1,4 @@
-package com.bankapp.dao.impl;
+package com.bankapp.dao.jdbc_impl;
 
 import com.bankapp.config.DBConnectionPoolUtil;
 import com.bankapp.dao.TransactionDAO;
@@ -85,7 +85,14 @@ public class TransactionDAOImpl implements TransactionDAO {
         }
     }
 
-    private Long createTransaction(Transaction transaction, Connection connection) {
+    @Override
+    public Long createTransaction(Transaction transaction, Object persistenceContext) {
+        if (!(persistenceContext instanceof Connection)) {
+            throw new IllegalArgumentException("Expected JDBC Connection");
+        }
+
+        Connection connection = (Connection) persistenceContext;
+
         if (transaction == null) {
             logger.warning("Cannot create transaction: Transaction is null");
             return null;
@@ -315,7 +322,8 @@ public class TransactionDAOImpl implements TransactionDAO {
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Database error while fetching transactions by status: " + status, e);
             throw new TransactionAccessException("Error fetching transactions by status: " + status, e);
-        }    }
+        }
+    }
 
     @Override
     public boolean updateTransactionStatus(Long transactionId, TransactionStatus newStatus) {
@@ -362,7 +370,8 @@ public class TransactionDAOImpl implements TransactionDAO {
             return false;
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Database error while updating transaction status for ID: " + transactionId, e);
-            throw new TransactionAccessException("Error updating transaction status for transaction ID: " + transactionId, e);         }
+            throw new TransactionAccessException("Error updating transaction status for transaction ID: " + transactionId, e);
+        }
     }
 
     @Override

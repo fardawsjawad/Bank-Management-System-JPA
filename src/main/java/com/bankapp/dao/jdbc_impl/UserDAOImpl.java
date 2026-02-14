@@ -1,4 +1,4 @@
-package com.bankapp.dao.impl;
+package com.bankapp.dao.jdbc_impl;
 
 import com.bankapp.config.DBConnectionPoolUtil;
 import com.bankapp.dao.UserDAO;
@@ -14,7 +14,6 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +32,13 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public Long createUser(User user, Connection connection) {
+    public Long createUser(User user, Object persistenceContext) {
+
+        if (!(persistenceContext instanceof Connection)) {
+            throw new IllegalArgumentException("Expected JDBC Connection");
+        }
+
+        Connection connection = (Connection) persistenceContext;
 
         if (user == null) {
             logger.warning("Cannot create user: User is null");
@@ -76,7 +81,8 @@ public class UserDAOImpl implements UserDAO {
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Database error while creating user", e);
             throw new DataAccessException("Error inserting user into database", e);
-        }    }
+        }
+    }
 
     @Override
     public Optional<User> getUserById(Long id) {
@@ -408,6 +414,7 @@ public class UserDAOImpl implements UserDAO {
     public Optional<User> getUserByIdentifier(String identifier) {
         if (identifier == null || identifier.isEmpty()) {
             logger.warning("Cannot check user existence: identifier is null");
+            return Optional.empty();
         }
 
         identifier = identifier.trim();

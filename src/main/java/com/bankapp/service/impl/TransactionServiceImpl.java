@@ -51,6 +51,10 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidTransactionDataException("Transaction amount must be greater than zero");
         }
 
+        if (transaction.getAvailableBalanceAfter() == null) {
+            throw new InvalidTransactionDataException("Available balance after transaction cannot be null");
+        }
+
         switch (transaction.getTransactionType()) {
             case DEPOSIT:
                 if (transaction.getToAccountId() == null) {
@@ -65,7 +69,8 @@ public class TransactionServiceImpl implements TransactionService {
                 break;
 
             case TRANSFER:
-                if (transaction.getFromAccountId() == null || transaction.getToAccountId() == null) {
+                if (transaction.getFromAccountId() == null ||
+                        transaction.getToAccountId() == null) {
                     throw new InvalidTransactionDataException("Transfer requires both account IDs");
                 }
                 if (transaction.getFromAccountId().equals(transaction.getToAccountId())) {
@@ -77,21 +82,17 @@ public class TransactionServiceImpl implements TransactionService {
                 throw new InvalidTransactionDataException("Unsupported transaction type");
         }
 
-        transaction.setTransactionDate(LocalDateTime.now());
-
         if (transaction.getTransactionStatus() == null) {
             transaction.setTransactionStatus(TransactionStatus.PENDING);
         }
 
-        System.out.println(transaction.getTransactionDate());
-
         Long transactionId = transactionDAO.createTransaction(transaction);
+
         if (transactionId == null) {
             throw new TransactionCreationException("Failed to create transaction");
         }
 
         return transactionId;
-
     }
 
 
@@ -101,7 +102,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidTransactionDataException("Transaction ID must not be null");
         }
 
-        Transaction transaction = transactionDAO.getTransactionById(id)
+        transactionDAO.getTransactionById(id)
                 .orElseThrow(() ->
                             new TransactionNotFoundException("No transactions exist with ID: " + id)
                         );
@@ -115,13 +116,14 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidTransactionDataException("accountId must not be null");
         }
 
-        Account account = accountDAO.getAccountById(accountId)
+        accountDAO.getAccountById(accountId)
                 .orElseThrow(() ->
                             new AccountNotFoundException("Account with ID: " + accountId + " not found")
                         );
 
         List<Transaction> transactions = transactionDAO.getTransactionsByAccountId(accountId);
-        if (transactions.isEmpty()) {
+        if (transactions == null ||
+                transactions.isEmpty()) {
             throw new TransactionNotFoundException("No transactions exist for account with ID: " + accountId);
         }
         Collections.sort(transactions, (t1, t2) ->
@@ -148,7 +150,7 @@ public class TransactionServiceImpl implements TransactionService {
             );
         }
 
-        Account account = accountDAO.getAccountById(accountId)
+        accountDAO.getAccountById(accountId)
                 .orElseThrow(
                         () -> new AccountNotFoundException("Account with ID: " + accountId + " not found")
                 );
@@ -170,7 +172,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidTransactionDataException("limit cannot exceed 100");
         }
 
-        Account account = accountDAO.getAccountById(accountId)
+        accountDAO.getAccountById(accountId)
                 .orElseThrow(() ->
                             new  AccountNotFoundException("Account with ID: " + accountId + " not found")
                         );

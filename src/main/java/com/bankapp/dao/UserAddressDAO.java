@@ -10,13 +10,13 @@ public interface UserAddressDAO {
 
     // CREATE
     Long createUserAddress(UserAddress userAddress);
-    Long  createUserAddress(UserAddress userAddress, Connection connection);
+    Long  createUserAddress(UserAddress userAddress, Object persistenceContext);
 
     // READ
     Optional<UserAddress> getAddressById(Long addressId);
     List<UserAddress> getAddressesByUserId(Long userId);
     List<UserAddress> getAllAddresses();
-    Long getAddressIdByUserId(Long userId);
+    List<Long> getAddressIdsByUserId(Long userId);
 
     // UPDATE
     boolean updateUserAddress(UserAddress userAddress);

@@ -9,6 +9,9 @@ import com.bankapp.exception.service_exceptions.user_service.*;
 import com.bankapp.model.*;
 import com.bankapp.security.PasswordHasher;
 import com.bankapp.service.UserService;
+import com.bankapp.util.JPAUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -18,22 +21,14 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserDAO userDAO;
-    private final UserAddressDAO  userAddressDAO;
-    private final EmploymentProfileDAO employmentProfileDAO;
-    private final UserRoleDAO  userRoleDAO;
 
-    public UserServiceImpl(UserDAO userDAO, UserAddressDAO userAddressDAO,
-                           EmploymentProfileDAO employmentProfileDAO,
-                           UserRoleDAO userRoleDAO) {
-
+    public UserServiceImpl(UserDAO userDAO) {
         this.userDAO = userDAO;
-        this.userAddressDAO = userAddressDAO;
-        this.employmentProfileDAO = employmentProfileDAO;
-        this.userRoleDAO = userRoleDAO;
     }
 
     @Override
     public Long createUser(User user, UserAddress userAddress, EmploymentProfile employmentProfile) {
+
         if (user == null) {
             throw new InvalidUserDataException("User cannot be null");
         }
@@ -42,52 +37,52 @@ public class UserServiceImpl implements UserService {
             throw new UserAlreadyExistsException("Email already exists: " + user.getEmail());
         }
 
-        try (Connection connection = DBConnectionPoolUtil.getConnection()) {
+        if (userDAO.userPassportNumberExists(user.getPassportNumber())) {
+            throw new InvalidUserDataException("Passport number already exists: " + user.getPassportNumber());
+        }
 
-            connection.setAutoCommit(false);
+        if (userDAO.userPhoneNumberExists(user.getPhoneNumber())) {
+            throw new InvalidUserDataException("Phone number already exists: " + user.getPhoneNumber());
+        }
 
-            user.setPasswordHash(PasswordHasher.hashPassword(user.getPasswordHash()));
-            Long userId = userDAO.createUser(user, connection);
-            if (userId == null) {
-                connection.rollback();
-                throw new UserCreationException("Failed to create user");
-            }
+        EntityManager entityManager = JPAUtil.getEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        try {
+
+            transaction.begin();
+
+            user.setPasswordHash(
+                    PasswordHasher.hashPassword(user.getPasswordHash())
+            );
 
             if (userAddress != null) {
-                userAddress.setUserId(userId);
-                Long addressId = userAddressDAO.createUserAddress(userAddress, connection);
-
-                if (addressId == null) {
-                    connection.rollback();
-                    throw new UserCreationException("Failed to create user address");
-                }
+                user.addAddress(userAddress);
             }
 
             if  (employmentProfile != null) {
-                employmentProfile.setUserId(userId);
-                Long employmentProfileId = employmentProfileDAO.createEmploymentProfile(employmentProfile, connection);
-
-                if (employmentProfileId == null) {
-                    connection.rollback();
-                    throw new UserCreationException("Failed to create employment profile");
-                }
+                user.setEmploymentProfile(employmentProfile);
             }
 
-            UserRole userRole = new UserRole(
-                    userId, Role.USER
-            );
-            Long roleId = userRoleDAO.createUserRole(userRole, connection);
+            UserRole userRole = new UserRole();
+            userRole.setUser(user);
+            userRole.setUserRole(Role.USER);
+            user.setUserRole(userRole);
 
-            if (roleId == null) {
-                connection.rollback();
-                throw new UserCreationException("Failed to create user role");
+            userDAO.createUser(user, entityManager);
+
+            transaction.commit();
+
+            return user.getUserId();
+
+        } catch (Exception e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
             }
 
-            connection.commit();
-            return userId;
-
-        } catch (SQLException e) {
             throw new UserCreationException("Database error: " +  e.getMessage(), e);
+        } finally {
+            entityManager.close();
         }
     }
 
@@ -97,25 +92,7 @@ public class UserServiceImpl implements UserService {
             throw new InvalidUserDataException("UserId cannot be null");
         }
 
-        Optional<User> optionalUser = userDAO.getUserById(userId);
-        if (!optionalUser.isPresent()) {
-            return Optional.empty();
-        }
-
-        User user =  optionalUser.get();
-
-        List<UserAddress> addresses = userAddressDAO.getAddressesByUserId(user.getUserId());
-        user.setUserAddresses(addresses);
-
-        Optional<UserRole> role = userRoleDAO.getRoleByUserId(user.getUserId());
-        role.ifPresent(userRole -> user.setRole(userRole.getUserRole()));
-
-        Optional<EmploymentProfile> employmentProfileOptional = employmentProfileDAO.getEmploymentProfileByUserId(user.getUserId());
-        if (employmentProfileOptional.isPresent()) {
-            user.setEmploymentProfile(employmentProfileOptional.get());
-        }
-
-        return Optional.of(user);
+        return userDAO.getUserById(userId);
     }
 
     @Override
@@ -124,25 +101,7 @@ public class UserServiceImpl implements UserService {
             throw new InvalidUserDataException("Username cannot be empty/null");
         }
 
-        Optional<User> userOptional = userDAO.getUserByUsername(username);
-        if (!userOptional.isPresent()) {
-            return Optional.empty();
-        }
-
-        User user =  userOptional.get();
-
-        List<UserAddress> addresses = userAddressDAO.getAddressesByUserId(user.getUserId());
-        user.setUserAddresses(addresses);
-
-        Optional<UserRole> userRole = userRoleDAO.getRoleByUserId(user.getUserId());
-        userRole.ifPresent(role -> user.setRole(role.getUserRole()));
-
-        Optional<EmploymentProfile> employmentProfileOptional = employmentProfileDAO.getEmploymentProfileByUserId(user.getUserId());
-        if (employmentProfileOptional.isPresent()) {
-            user.setEmploymentProfile(employmentProfileOptional.get());
-        }
-
-        return Optional.of(user);
+        return userDAO.getUserByUsername(username);
     }
 
     @Override
@@ -151,25 +110,7 @@ public class UserServiceImpl implements UserService {
             throw new InvalidUserDataException("Email cannot be empty/null");
         }
 
-        Optional<User> userOptional = userDAO.getUserByEmail(email);
-        if (!userOptional.isPresent()) {
-            return Optional.empty();
-        }
-
-        User user =  userOptional.get();
-
-        List<UserAddress> addresses = userAddressDAO.getAddressesByUserId(user.getUserId());
-        user.setUserAddresses(addresses);
-
-        Optional<UserRole> userRole = userRoleDAO.getRoleByUserId(user.getUserId());
-        userRole.ifPresent(role -> user.setRole(role.getUserRole()));
-
-        Optional<EmploymentProfile> employmentProfileOptional = employmentProfileDAO.getEmploymentProfileByUserId(user.getUserId());
-        if (employmentProfileOptional.isPresent()) {
-            user.setEmploymentProfile(employmentProfileOptional.get());
-        }
-
-        return Optional.of(user);
+        return userDAO.getUserByEmail(email);
     }
 
     @Override
@@ -178,12 +119,10 @@ public class UserServiceImpl implements UserService {
             throw new InvalidUserDataException("Identifier cannot be empty/null");
         }
 
-        User user =  userDAO.getUserByIdentifier(identifier)
+        return userDAO.getUserByIdentifier(identifier)
                 .orElseThrow(() ->
                             new EmailAddressNotFoundException("Identifier: " + identifier + " not found")
                         );
-
-        return user;
     }
 
     @Override
@@ -201,6 +140,7 @@ public class UserServiceImpl implements UserService {
                             new UserNotFoundException("User not found")
                         );
 
+        user.setPasswordHash(user1.getPasswordHash());
         boolean success = userDAO.updateUser(user);
         if (!success) {
             throw new UserException("Failed to update user");
@@ -215,12 +155,11 @@ public class UserServiceImpl implements UserService {
             throw new InvalidUserDataException("userId and username cannot be empty/null");
         }
 
-        User user = userDAO.getUserById(userId)
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found.")
-                );
+        if (!userDAO.updateUserUsername(userId, newUsername)) {
+            throw new UserNotFoundException("User not found");
+        }
 
-        return userDAO.updateUserUsername(userId, newUsername);
+        return true;
     }
 
     @Override
@@ -229,7 +168,8 @@ public class UserServiceImpl implements UserService {
             throw new InvalidUserDataException("userId and password cannot be empty/null");
         }
 
-        return userDAO.updateUserPassword(userId, newHashedPassword);
+        String hashedPassword =  PasswordHasher.hashPassword(newHashedPassword);
+        return userDAO.updateUserPassword(userId, hashedPassword);
     }
 
     @Override
@@ -238,12 +178,11 @@ public class UserServiceImpl implements UserService {
             throw new InvalidUserDataException("UserId cannot be null");
         }
 
-        User user = userDAO.getUserById(userId)
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found")
-                );
+        if (!userDAO.deleteUser(userId)) {
+            throw new UserNotFoundException("User not found");
+        }
 
-        return userDAO.deleteUser(userId);
+        return true;
     }
 
     @Override

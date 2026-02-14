@@ -23,8 +23,8 @@ public class AdminMenu {
     ) {
 
         this.adminUserMenu = new AdminUserMenu(userService, userRoleService,  userAddressService, employmentProfileService);
-        this.adminUserAddressMenu = new AdminUserAddressMenu(userAddressService);
-        this.adminUserEmploymentProfileMenu = new AdminUserEmploymentProfileMenu(employmentProfileService);
+        this.adminUserAddressMenu = new AdminUserAddressMenu(userAddressService, userService);
+        this.adminUserEmploymentProfileMenu = new AdminUserEmploymentProfileMenu(employmentProfileService, userService);
         this.adminUserAccountMenu = new AdminUserAccountMenu(userService, accountService);
         this.adminUserTransactionMenu = new AdminUserTransactionMenu(transactionService);
     }

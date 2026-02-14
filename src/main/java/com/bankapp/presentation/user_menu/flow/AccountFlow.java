@@ -18,10 +18,12 @@ public class AccountFlow {
     }
 
     public void openAccount(User user) {
-        Account account = GetUserInput.generateAccountForCreation(user.getUserId());
+        Account account = GetUserInput.generateAccountForCreation();
         if (account == null) {
             return;
         }
+
+        account.setUser(user);
 
         Long accountId = accountService.createAccount(account);
         if (accountId != null) {
@@ -35,47 +37,51 @@ public class AccountFlow {
         System.out.print("\nEnter your account ID: ");
         Long accountId = ConsoleReader.readLong();
 
-        Optional<Account> accountOptional = accountService.getAccountById(accountId);
+        try {
+            Optional<Account> accountOptional = accountService.getAccountById(accountId);
 
-        if (accountOptional.isPresent()) {
-            Account account = accountOptional.get();
+            if (accountOptional.isPresent()) {
+                Account account = accountOptional.get();
 
-            if (account.getAccountOwnerId().equals(userId)) {
+                if (account.getAccountOwnerId().equals(userId)) {
 
-                AccountStatus accountStatus = account.getAccountStatus();
-                if (!accountStatus.equals(AccountStatus.ACTIVE)) {
-                    System.out.println("Cannot close account. Account is not active. " +
-                            "Please contact management for further instructions.");
-                    return;
-                }
-
-                if (account.getAccountBalance().compareTo(BigDecimal.ZERO) > 0) {
-                    System.out.println("Cannot close account. Account balance is greater than zero");
-                    return;
-                }
-
-                System.out.print("Are you sure you want to close your account? Y/N: ");
-                boolean answer = ConsoleReader.readYesNo();
-
-                if (answer) {
-                    try {
-                        boolean closed = accountService.updateAccountStatus(accountId, AccountStatus.CLOSED);
-                        if (closed) {
-                            System.out.println("Account successfully closed");
-                        } else {
-                            System.out.println("Account could not be closed");
-                        }
-                    } catch (Exception e) {
-                        System.out.println(e.getMessage());
+                    AccountStatus accountStatus = account.getAccountStatus();
+                    if (!accountStatus.equals(AccountStatus.ACTIVE)) {
+                        System.out.println("Cannot close account. Account is not active. " +
+                                "Please contact management for further instructions.");
+                        return;
                     }
-                }
-            } else  {
-                System.out.println("Account with ID: " + accountId + " could not be found");
-            }
-        } else {
-            System.out.println("Account not found");
-        }
 
+                    if (account.getAccountBalance().compareTo(BigDecimal.ZERO) > 0) {
+                        System.out.println("Cannot close account. Account balance is greater than zero");
+                        return;
+                    }
+
+                    System.out.print("Are you sure you want to close your account? Y/N: ");
+                    boolean answer = ConsoleReader.readYesNo();
+
+                    if (answer) {
+                        try {
+                            boolean closed = accountService.updateAccountStatus(accountId, AccountStatus.CLOSED);
+                            if (closed) {
+                                System.out.println("Account successfully closed");
+                            } else {
+                                System.out.println("Account could not be closed");
+                            }
+                        } catch (Exception e) {
+                            System.out.println(e.getMessage());
+                        }
+                    }
+                } else {
+                    System.out.println("Account with ID: " + accountId + " could not be found");
+                }
+            } else {
+                System.out.println("Account not found");
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage() + "\n");
+        }
     }
 
     public void viewAccountDetails(Long userId) {

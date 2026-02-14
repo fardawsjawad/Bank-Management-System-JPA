@@ -38,8 +38,8 @@ public class AdminUserAccountFlow {
             return;
         }
 
-        Account account = GetUserInput.generateAccountForCreation(userId);
-        System.out.println(account);
+        Account account = GetUserInput.generateAccountForCreation();
+        account.setUser(userOptional.get());
 
         try {
             Long accountId = accountService.createAccount(account);
@@ -176,30 +176,36 @@ public class AdminUserAccountFlow {
         System.out.print("\nEnter Account ID: ");
         Long accountId = ConsoleReader.readLong();
 
-        System.out.println("Choose new status: ");
-        System.out.println("1. Active");
-        System.out.println("2. Frozen");
-        System.out.println("3. Suspend");
-        System.out.println("4. Dormant");
-        System.out.println("5. Close");
-        System.out.print("Enter your choice: ");
-        int accountStatusChoice = ConsoleReader.readInt();
-
-        AccountStatus accountStatus = null;
-
-        switch (accountStatusChoice) {
-            case 1 -> accountStatus = AccountStatus.ACTIVE;
-            case 2 -> accountStatus = AccountStatus.FROZEN;
-            case 3 -> accountStatus = AccountStatus.SUSPENDED;
-            case 4 -> accountStatus = AccountStatus.DORMANT;
-            case 5 -> accountStatus = AccountStatus.CLOSED;
-            default -> {
-                System.out.println("Invalid choice");
+        try {
+            Optional<Account> accountOptional = accountService.getAccountById(accountId);
+            if (!accountOptional.isPresent()) {
+                System.out.println("Account not found");
                 return;
             }
-        }
 
-        try {
+            System.out.println("Choose new status: ");
+            System.out.println("1. Active");
+            System.out.println("2. Frozen");
+            System.out.println("3. Suspend");
+            System.out.println("4. Dormant");
+            System.out.println("5. Close");
+            System.out.print("Enter your choice: ");
+            int accountStatusChoice = ConsoleReader.readInt();
+
+            AccountStatus accountStatus = null;
+
+            switch (accountStatusChoice) {
+                case 1 -> accountStatus = AccountStatus.ACTIVE;
+                case 2 -> accountStatus = AccountStatus.FROZEN;
+                case 3 -> accountStatus = AccountStatus.SUSPENDED;
+                case 4 -> accountStatus = AccountStatus.DORMANT;
+                case 5 -> accountStatus = AccountStatus.CLOSED;
+                default -> {
+                    System.out.println("Invalid choice");
+                    return;
+                }
+            }
+
             boolean updated = accountService.updateAccountStatus(accountId, accountStatus);
             if (updated) {
                 System.out.println("Account Status Updated Successfully");

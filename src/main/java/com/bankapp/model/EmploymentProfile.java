@@ -1,19 +1,49 @@
 package com.bankapp.model;
 
-import java.math.BigDecimal;
-import java.util.Objects;
+import jakarta.persistence.*;
+import lombok.*;
 
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "employmentprofile")
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = {"user"})
 public class EmploymentProfile {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @Column(name = "employment_profile_id")
     private Long employmentProfileId;
+
+    @Column(name = "user_id", nullable = false, insertable = false, updatable = false)
     private Long userId;
+
+    @Column(name = "occupation", nullable = false)
     private String occupation;
+
+    @Column(name = "annual_income",  nullable = false)
     private BigDecimal annualIncome;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_of_funds",  nullable = false)
     private SourceOfFunds sourceOfFunds;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_purpose", nullable = false)
     private AccountPurpose accountPurpose;
 
-    public EmploymentProfile() {
-    }
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            unique = true
+    )
+    private User user;
 
     public EmploymentProfile(Long employmentProfileId, Long userId, String occupation,
                              BigDecimal annualIncome, SourceOfFunds sourceOfFunds,
@@ -44,77 +74,5 @@ public class EmploymentProfile {
         this.annualIncome = annualIncome;
         this.sourceOfFunds = sourceOfFunds;
         this.accountPurpose = accountPurpose;
-    }
-
-    public Long getEmploymentProfileId() {
-        return employmentProfileId;
-    }
-
-    public void setEmploymentProfileId(Long employmentProfileId) {
-        this.employmentProfileId = employmentProfileId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getOccupation() {
-        return occupation;
-    }
-
-    public void setOccupation(String occupation) {
-        this.occupation = occupation;
-    }
-
-    public BigDecimal getAnnualIncome() {
-        return annualIncome;
-    }
-
-    public void setAnnualIncome(BigDecimal annualIncome) {
-        this.annualIncome = annualIncome;
-    }
-
-    public SourceOfFunds getSourceOfFunds() {
-        return sourceOfFunds;
-    }
-
-    public void setSourceOfFunds(SourceOfFunds sourceOfFunds) {
-        this.sourceOfFunds = sourceOfFunds;
-    }
-
-    public AccountPurpose getAccountPurpose() {
-        return accountPurpose;
-    }
-
-    public void setAccountPurpose(AccountPurpose accountPurpose) {
-        this.accountPurpose = accountPurpose;
-    }
-
-    @Override
-    public String toString() {
-        return "EmploymentProfile{" +
-                "employmentProfileId=" + employmentProfileId +
-                ", userId=" + (userId != null ? userId : null) +
-                ", occupation='" + occupation + '\'' +
-                ", annualIncome=" + annualIncome +
-                ", sourceOfFunds=" + sourceOfFunds +
-                ", accountPurpose=" + accountPurpose +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        EmploymentProfile that = (EmploymentProfile) o;
-        return Objects.equals(employmentProfileId, that.employmentProfileId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(employmentProfileId);
     }
 }

@@ -1,9 +1,11 @@
 package com.bankapp.presentation.admin_menu.flow;
 
+import com.bankapp.model.User;
 import com.bankapp.model.UserAddress;
 import com.bankapp.presentation.input.ConsoleReader;
 import com.bankapp.presentation.input.GetUserInput;
 import com.bankapp.service.UserAddressService;
+import com.bankapp.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,18 +13,33 @@ import java.util.Optional;
 public class AdminUserAddressFlow {
 
     private final UserAddressService userAddressService;
+    private final UserService userService;
 
 
     public AdminUserAddressFlow(
-            UserAddressService userAddressService
+            UserAddressService userAddressService,
+            UserService userService
     ) {
 
         this.userAddressService = userAddressService;
+        this.userService = userService;
     }
 
     public void createAddress() {
 
-        UserAddress newAddress = GetUserInput.getUserAddress(true);
+        System.out.print("Enter User ID: ");
+        Long userId = ConsoleReader.readLong();
+
+        Optional<User> userOptional = userService.getUserById(userId);
+        if (!userOptional.isPresent()) {
+            System.out.println("User with ID: " + userId + " not found");
+            return;
+        }
+
+        User user = userOptional.get();
+
+        UserAddress newAddress = GetUserInput.getUserAddress();
+        newAddress.setUser(user);
 
         try {
             Long newAddressId = userAddressService.createUserAddress(newAddress);

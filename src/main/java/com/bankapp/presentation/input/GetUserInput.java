@@ -63,12 +63,7 @@ public class GetUserInput {
         return user;
     }
 
-    public static EmploymentProfile getEmploymentProfile(boolean getEmploymentProfileWithUserId) {
-        Long userId = null;
-        if (getEmploymentProfileWithUserId) {
-            System.out.print("\nEnter user ID: ");
-            userId = ConsoleReader.readLong();
-        }
+    public static EmploymentProfile getEmploymentProfile() {
 
         System.out.print("\nEnter your occupation: ");
         String occupation = ConsoleReader.readString();
@@ -133,27 +128,15 @@ public class GetUserInput {
             }
         }
 
-        EmploymentProfile employmentProfile = new EmploymentProfile(
+        return new EmploymentProfile(
                 occupation,
                 annualIncome,
                 sourceOfFunds,
                 accountPurpose
         );
-
-        if (getEmploymentProfileWithUserId) {
-            employmentProfile.setUserId(userId);
-        }
-
-        return employmentProfile;
     }
 
-    public static UserAddress getUserAddress(boolean getUserAddressWithUserId) {
-
-        Long userId = null;
-        if (getUserAddressWithUserId) {
-            System.out.print("\nEnter User ID: ");
-            userId = ConsoleReader.readLong();
-        }
+    public static UserAddress getUserAddress() {
 
         System.out.println("Choose address type: ");
         System.out.println("1. Residential");
@@ -247,7 +230,7 @@ public class GetUserInput {
 
         if (stateOrProvince.isBlank()) stateOrProvince = null;
 
-        UserAddress userAddress  = new UserAddress(
+        return new UserAddress(
                 addressType,
                 addressLine1,
                 addressLine2,
@@ -258,15 +241,9 @@ public class GetUserInput {
                 postalCode,
                 country
         );
-
-        if (getUserAddressWithUserId) {
-            userAddress.setUserId(userId);
-        }
-
-        return userAddress;
     }
 
-    public static Account generateAccountForCreation(Long userId) {
+    public static Account generateAccountForCreation() {
         System.out.println("Choose account type: ");
         System.out.println("1. Savings");
         System.out.println("2. Current");
@@ -287,12 +264,12 @@ public class GetUserInput {
         System.out.print("Enter Account PIN code: ");
         String  accountPinCode = ConsoleReader.readString();
 
-        return new Account(
-                userId,
-                accountPinCode,
-                accountType,
-                "KKBK0008"
-        );
+        Account account = new Account();
+        account.setTransactionPinHash(accountPinCode);
+        account.setAccountType(accountType);
+        account.setBicSwiftCode("KKBK0008");
+
+        return account;
     }
 
     public static TransactionStatus getTransactionStatus() {

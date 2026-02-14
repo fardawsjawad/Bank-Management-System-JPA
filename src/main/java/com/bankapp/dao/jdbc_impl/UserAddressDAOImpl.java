@@ -1,4 +1,4 @@
-package com.bankapp.dao.impl;
+package com.bankapp.dao.jdbc_impl;
 
 import com.bankapp.config.DBConnectionPoolUtil;
 import com.bankapp.dao.UserAddressDAO;
@@ -29,7 +29,13 @@ public class UserAddressDAOImpl implements UserAddressDAO {
     }
 
     @Override
-    public Long createUserAddress(UserAddress userAddress, Connection connection) {
+    public Long createUserAddress(UserAddress userAddress, Object persistenceContext) {
+        if (!(persistenceContext instanceof Connection)) {
+            throw new IllegalArgumentException("Expected JDBC Connection");
+        }
+
+        Connection connection = (Connection) persistenceContext;
+
         if (userAddress == null) {
             logger.warning("Cannot create user address: UserAddress is null");
             return null;
@@ -177,7 +183,7 @@ public class UserAddressDAOImpl implements UserAddressDAO {
     }
 
     @Override
-    public Long getAddressIdByUserId(Long userId) {
+    public List<Long> getAddressIdsByUserId(Long userId) {
         if (userId == null) {
             logger.warning("Cannot retrieve user address: userId is null");
             return null;
@@ -192,7 +198,7 @@ public class UserAddressDAOImpl implements UserAddressDAO {
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    return resultSet.getLong("address_id");
+                    return List.of(resultSet.getLong("address_id"));
                 }
             }
 
@@ -337,7 +343,7 @@ public class UserAddressDAOImpl implements UserAddressDAO {
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Database error while fetching address ID: " +
                     addressId, e);
-            throw new EmploymentProfileAccessException("Error fetching address ID: " +
+            throw new UserAddressAccessException("Error fetching address ID: " +
                     addressId, e);
         }
     }

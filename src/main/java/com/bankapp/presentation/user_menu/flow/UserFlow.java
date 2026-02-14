@@ -158,7 +158,7 @@ public class UserFlow {
             return null;
         }
 
-        UserAddress userAddress = GetUserInput.getUserAddress(false);
+        UserAddress userAddress = GetUserInput.getUserAddress();
         if (userAddress == null) {
             return null;
         }
@@ -177,7 +177,7 @@ public class UserFlow {
             return null;
         }
 
-        EmploymentProfile employmentProfile = GetUserInput.getEmploymentProfile(false);
+        EmploymentProfile employmentProfile = GetUserInput.getEmploymentProfile();
         if (employmentProfile == null) {
             return null;
         }

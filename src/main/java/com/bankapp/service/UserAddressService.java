@@ -13,7 +13,7 @@ public interface UserAddressService {
     Optional<UserAddress> getAddressById(Long addressId);
     List<UserAddress> getAddressesByUserId(Long userId);
     List<UserAddress> getAllAddresses();
-    Long getAddressIdByUserId(Long userId);
+    List<Long> getAddressIdsByUserId(Long userId);
 
     boolean updateUserAddress(UserAddress userAddress);
 

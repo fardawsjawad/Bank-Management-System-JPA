@@ -1,13 +1,11 @@
-package com.bankapp.dao.impl;
+package com.bankapp.dao.jdbc_impl;
 
 import com.bankapp.config.DBConnectionPoolUtil;
 import com.bankapp.dao.UserRoleDAO;
-import com.bankapp.dao.sql.UserAddressSQLQueries;
 import com.bankapp.dao.sql.UserRoleSQLQueries;
 import com.bankapp.exception.DAO_exceptions.UserAddressAccessException;
 import com.bankapp.exception.DAO_exceptions.UserRoleAccessException;
 import com.bankapp.model.Role;
-import com.bankapp.model.UserAddress;
 import com.bankapp.model.UserRole;
 
 import java.sql.*;
@@ -31,7 +29,14 @@ public class UserRoleDAOImpl implements UserRoleDAO {
     }
 
     @Override
-    public Long createUserRole(UserRole userRole, Connection connection) {
+    public Long createUserRole(UserRole userRole, Object persistenceContext) {
+
+        if (!(persistenceContext instanceof Connection)) {
+            throw new IllegalArgumentException("Expected JDBC Connection");
+        }
+
+        Connection connection = (Connection) persistenceContext;
+
         if (userRole == null) {
             logger.warning("Cannot create user role: UserRole is null");
             return null;

@@ -10,7 +10,7 @@ public interface UserRoleDAO {
 
     // CREATE
     Long createUserRole(UserRole userRole);
-    Long createUserRole(UserRole userRole, Connection connection);
+    Long createUserRole(UserRole userRole, Object persistenceContext);
 
     // RETRIEVE
     Optional<UserRole> getRoleById(Long id);

@@ -32,26 +32,34 @@ public class UserAddressServiceImpl implements UserAddressService {
             throw new InvalidUserAddressDataException("userAddress must not be null");
         }
 
-        if (userAddress.getUserId() == null) {
+        if (userAddress.getUser() == null ||
+            userAddress.getUser().getUserId() == null) {
             throw new InvalidUserAddressDataException("userId must not be null");
         }
 
-        if (!userDAO.userExistsByUserId(userAddress.getUserId())) {
-            throw new UserNotFoundException("User with ID: " +  userAddress.getUserId() + " does not exist");
-        }
+        Long userId = userAddress.getUser().getUserId();
 
+        if (!userDAO.userExistsByUserId(userId)) {
+            throw new UserNotFoundException(
+                    "User with ID: " + userId + " does not exist"
+            );
+        }
 
         if (userAddress.getAddressType() == null) {
-            throw new InvalidUserAddressDataException("addressType must not be null");
+            throw new InvalidUserAddressDataException(
+                    "addressType must not be null"
+            );
         }
 
-        Long userAddressId = userAddressDAO.createUserAddress(userAddress);
-        if (userAddressId == null) {
-            throw new UserAddressCreationException("Failed to create user address");
+        Long id = userAddressDAO.createUserAddress(userAddress);
+
+        if (id == null) {
+            throw new UserAddressCreationException(
+                    "Failed to create user address"
+            );
         }
 
-        return userAddressId;
-
+        return id;
     }
 
     @Override
@@ -82,12 +90,12 @@ public class UserAddressServiceImpl implements UserAddressService {
     }
 
     @Override
-    public Long getAddressIdByUserId(Long userId) {
+    public List<Long> getAddressIdsByUserId(Long userId) {
         if (userId == null) {
             throw new InvalidUserAddressDataException("UserId must not be null");
         }
 
-        return userAddressDAO.getAddressIdByUserId(userId);
+        return userAddressDAO.getAddressIdsByUserId(userId);
     }
 
     @Override
@@ -100,12 +108,11 @@ public class UserAddressServiceImpl implements UserAddressService {
             throw new InvalidUserAddressDataException("addressId must not be null");
         }
 
-        UserAddress address = userAddressDAO.getAddressById(userAddress.getAddressId())
-                .orElseThrow(() ->
-                            new AddressNotFoundException("Address not found")
-                        );
+        userAddressDAO.getAddressById(userAddress.getAddressId())
+                .orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
         boolean success = userAddressDAO.updateUserAddress(userAddress);
+
         if (!success) {
             throw new UserAddressException("Failed to update user address");
         }
@@ -120,6 +127,7 @@ public class UserAddressServiceImpl implements UserAddressService {
         }
 
         boolean success = userAddressDAO.deleteUserAddress(addressId);
+
         if (!success) {
             throw new AddressNotFoundException("Address with ID: " +  addressId + " does not exist");
         }
@@ -133,12 +141,13 @@ public class UserAddressServiceImpl implements UserAddressService {
             throw new InvalidUserAddressDataException("userId must not be null");
         }
 
-        User user = userDAO.getUserById(userId)
+        userDAO.getUserById(userId)
                 .orElseThrow(() ->
                         new UserNotFoundException("User not found")
                 );
 
         boolean success = userAddressDAO.deleteAddressesByUserId(userId);
+
         if (!success) {
             throw new AddressNotFoundException("No address found for user with ID: " + userId);
         }

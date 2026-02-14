@@ -37,8 +37,8 @@ public class AdminUserFlow {
 
     public void createUser() {
         User user = GetUserInput.getUser(false);
-        UserAddress userAddress = GetUserInput.getUserAddress(false);
-        EmploymentProfile employmentProfile = GetUserInput.getEmploymentProfile(false);
+        UserAddress userAddress = GetUserInput.getUserAddress();
+        EmploymentProfile employmentProfile = GetUserInput.getEmploymentProfile();
 
         try {
             Long userId = userService.createUser(user, userAddress, employmentProfile);

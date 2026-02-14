@@ -1,22 +1,56 @@
 package com.bankapp.model;
 
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
+@Entity
+@Table(name = "transactions")
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = {"fromAccount", "toAccount"})
 public class Transaction {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @Column(name = "transaction_id")
     private Long transactionId;
+
+    @Column(name = "from_account_id")
     private Long fromAccountId;
+
+    @Column(name = "to_account_id")
     private Long toAccountId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transaction_type", nullable = false)
     private TransactionType transactionType;
+
+    @Column(name = "amount", nullable = false)
     private BigDecimal amount;
+
+    @Column(name = "available_balance_after",  nullable = false)
     private BigDecimal availableBalanceAfter;
+
+    @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transaction_status", nullable = false)
     private TransactionStatus transactionStatus;
 
-    public Transaction() {
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "from_account_id", insertable = false, updatable = false)
+    private Account fromAccount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "to_account_id", insertable = false, updatable = false)
+    private Account toAccount;
 
     public Transaction(Long transactionId, Long fromAccountId, Long toAccountId,
                        TransactionType transactionType, BigDecimal amount,
@@ -33,106 +67,33 @@ public class Transaction {
         this.transactionStatus = transactionStatus;
     }
 
-    public Transaction(Long fromAccountId, Long toAccountId, TransactionType transactionType,
-                       BigDecimal amount, BigDecimal availableBalanceAfter,
+    public Transaction(Long fromAccountId, Long toAccountId,
+                       TransactionType transactionType, BigDecimal amount,
+                       BigDecimal availableBalanceAfter,
                        TransactionStatus transactionStatus) {
-
         this.fromAccountId = fromAccountId;
         this.toAccountId = toAccountId;
         this.transactionType = transactionType;
         this.amount = amount;
         this.availableBalanceAfter = availableBalanceAfter;
-        this.transactionDate = transactionDate;
         this.transactionStatus = transactionStatus;
     }
 
-    public Long getTransactionId() {
-        return transactionId;
+    public void setFromAccount(Account account) {
+        this.fromAccount = account;
+        this.fromAccountId = (account != null) ? account.getAccountId() : null;
     }
 
-    public void setTransactionId(Long transactionId) {
-        this.transactionId = transactionId;
+    public void setToAccount(Account account) {
+        this.toAccount = account;
+        this.toAccountId = (account != null) ? account.getAccountId() : null;
     }
 
-    public Long getFromAccountId() {
-        return fromAccountId;
-    }
 
-    public void setFromAccountId(Long fromAccountId) {
-        this.fromAccountId = fromAccountId;
-    }
-
-    public Long getToAccountId() {
-        return toAccountId;
-    }
-
-    public void setToAccountId(Long toAccountId) {
-        this.toAccountId = toAccountId;
-    }
-
-    public TransactionType getTransactionType() {
-        return transactionType;
-    }
-
-    public void setTransactionType(TransactionType transactionType) {
-        this.transactionType = transactionType;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public BigDecimal getAvailableBalanceAfter() {
-        return availableBalanceAfter;
-    }
-
-    public void setAvailableBalanceAfter(BigDecimal availableBalanceAfter) {
-        this.availableBalanceAfter = availableBalanceAfter;
-    }
-
-    public LocalDateTime getTransactionDate() {
-        return transactionDate;
-    }
-
-    public void setTransactionDate(LocalDateTime transactionDate) {
-        this.transactionDate = transactionDate;
-    }
-
-    public TransactionStatus getTransactionStatus() {
-        return transactionStatus;
-    }
-
-    public void setTransactionStatus(TransactionStatus transactionStatus) {
-        this.transactionStatus = transactionStatus;
-    }
-
-    @Override
-    public String toString() {
-        return "Transaction{" +
-                "transactionId=" + transactionId +
-                ", fromAccountId=" + fromAccountId +
-                ", toAccountId=" + toAccountId +
-                ", transactionType=" + transactionType +
-                ", amount=" + amount +
-                ", availableBalanceAfter=" + availableBalanceAfter +
-                ", transactionDate=" + transactionDate +
-                ", transactionStatus=" + transactionStatus +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Transaction that = (Transaction) o;
-        return Objects.equals(transactionId, that.transactionId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(transactionId);
+    @PrePersist
+    public void prePersist() {
+        if (transactionDate == null) {
+            transactionDate = LocalDateTime.now();
+        }
     }
 }

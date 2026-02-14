@@ -10,7 +10,7 @@ public interface EmploymentProfileDAO {
 
     // CREATE
     Long createEmploymentProfile(EmploymentProfile employmentProfile);
-    Long createEmploymentProfile(EmploymentProfile employmentProfile, Connection connection);
+    Long createEmploymentProfile(EmploymentProfile employmentProfile, Object persistenceContext);
 
     // RETRIEVE
     Optional<EmploymentProfile> getEmploymentProfileById(Long id);

@@ -3,6 +3,7 @@ package com.bankapp.presentation.admin_menu;
 import com.bankapp.presentation.admin_menu.flow.AdminUserEmploymentProfileFlow;
 import com.bankapp.presentation.input.ConsoleReader;
 import com.bankapp.service.EmploymentProfileService;
+import com.bankapp.service.UserService;
 import com.bankapp.util.LogoutUser;
 
 public class AdminUserEmploymentProfileMenu {
@@ -10,10 +11,11 @@ public class AdminUserEmploymentProfileMenu {
     private final AdminUserEmploymentProfileFlow adminUserEmploymentProfileFlow;
 
     public AdminUserEmploymentProfileMenu(
-            EmploymentProfileService employmentProfileService
+            EmploymentProfileService employmentProfileService,
+            UserService userService
     ) {
 
-        this.adminUserEmploymentProfileFlow = new AdminUserEmploymentProfileFlow(employmentProfileService);
+        this.adminUserEmploymentProfileFlow = new AdminUserEmploymentProfileFlow(employmentProfileService, userService);
     }
 
     public void display() {

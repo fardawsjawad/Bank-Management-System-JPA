@@ -7,6 +7,7 @@ import com.bankapp.exception.service_exceptions.user_service.UserNotFoundExcepti
 import com.bankapp.model.Account;
 import com.bankapp.model.AccountStatus;
 import com.bankapp.model.AccountType;
+import com.bankapp.model.User;
 import com.bankapp.security.PasswordHasher;
 import com.bankapp.service.AccountService;
 
@@ -32,9 +33,20 @@ public class AccountServiceImpl implements AccountService {
             throw new InvalidAccountDataException("Account cannot be null");
         }
 
-        if (!userDAO.userExistsByUserId(account.getAccountOwnerId())) {
-            throw new UserNotFoundException("User does not exist for ID: " + account.getAccountOwnerId());
+        if (account.getUser() == null ||
+                account.getUser().getUserId() == null) {
+            throw new InvalidAccountDataException("UserId must not be null");
         }
+
+
+        Long userId = account.getUser().getUserId();
+
+        User user = userDAO.getUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(
+                        "User with ID: " + userId + " does not exist"
+                ));
+
+        account.setUser(user);
 
         if (account.getAccountType() == null) {
             throw new InvalidAccountDataException("Account type must be provided");
@@ -50,6 +62,7 @@ public class AccountServiceImpl implements AccountService {
         account.setTransactionPinHash(
                 PasswordHasher.hashPassword(account.getTransactionPinHash())
         );
+
         Long accountId = accountDAO.createAccount(account);
         if (accountId == null) {
             throw new AccountCreationException("Failed to create account");
@@ -61,6 +74,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<Account> getAllAccounts() {
         List<Account>  accounts = accountDAO.getAllAccounts();
+        if (accounts == null || accounts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         Collections.sort(accounts, (account1, account2) -> account1.getOpeningDate().compareTo(account2.getOpeningDate()));
 
         return accounts;
@@ -72,12 +89,13 @@ public class AccountServiceImpl implements AccountService {
             throw new InvalidAccountDataException("Account ID must not be null");
         }
 
-        Account account = accountDAO.getAccountById(accountId)
-                .orElseThrow(() ->
-                            new AccountNotFoundException("Account not found")
-                        );
+        Optional<Account> accountOptional = accountDAO.getAccountById(accountId);
 
-        return accountDAO.getAccountById(accountId);
+        if (!accountOptional.isPresent()) {
+            throw new AccountNotFoundException("Account not found");
+        }
+
+        return accountOptional;
     }
 
     @Override
@@ -86,12 +104,13 @@ public class AccountServiceImpl implements AccountService {
             throw new  InvalidAccountDataException("Account number must not be null or empty");
         }
 
-        Account account = accountDAO.getAccountByAccountNumber(accountNumber)
-                .orElseThrow(() ->
-                            new AccountNotFoundException("Account not found")
-                        );
+        Optional<Account> accountOptional = accountDAO.getAccountByAccountNumber(accountNumber);
 
-        return accountDAO.getAccountByAccountNumber(accountNumber);
+        if (!accountOptional.isPresent()) {
+            throw new AccountNotFoundException("Account not found");
+        }
+
+        return accountOptional;
     }
 
     @Override
@@ -101,6 +120,11 @@ public class AccountServiceImpl implements AccountService {
         }
 
         List<Account> userAccounts = accountDAO.getAccountsByUserId(userId);
+        if (userAccounts == null ||
+            userAccounts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         Collections.sort(userAccounts, (account1, account2) ->
                 account1.getOpeningDate().compareTo(account2.getOpeningDate()));
 
@@ -227,7 +251,7 @@ public class AccountServiceImpl implements AccountService {
             );
         }
 
-        if (newStatus == AccountStatus.CLOSED || newStatus == AccountStatus.DELETED &&
+        if ((newStatus == AccountStatus.CLOSED || newStatus == AccountStatus.DELETED) &&
                 account.getAccountBalance().compareTo(BigDecimal.ZERO) > 0) {
             throw new AccountBalanceException(
                     "Account balance is greater than zero. Make sure that the balance is 0."
@@ -264,7 +288,7 @@ public class AccountServiceImpl implements AccountService {
             );
         }
 
-        if (account.getAccountBalance().longValue() > 0) {
+        if (account.getAccountBalance().compareTo(BigDecimal.ZERO) > 0) {
             throw new InvalidAccountStateException(
                     "Cannot delete account. The account balance is positive"
             );

@@ -29,11 +29,16 @@ public class EmploymentProfileServiceImpl implements EmploymentProfileService {
     public Long createEmploymentProfile(EmploymentProfile employmentProfile) {
 
         if (employmentProfile == null) {
-            throw new InvalidEmploymentProfileDataException("EmploymentProfile must not be null");
+            throw new InvalidEmploymentProfileDataException(
+                    "EmploymentProfile must not be null"
+            );
         }
 
-        if (employmentProfile.getUserId() == null) {
-            throw new InvalidEmploymentProfileDataException("EmploymentProfile userId must not be null");
+        if (employmentProfile.getUser() == null ||
+                employmentProfile.getUser().getUserId() == null) {
+            throw new InvalidEmploymentProfileDataException(
+                    "EmploymentProfile userId must not be null"
+            );
         }
 
         if (employmentProfile.getSourceOfFunds() == null ||
@@ -50,15 +55,20 @@ public class EmploymentProfileServiceImpl implements EmploymentProfileService {
             );
         }
 
-        User user = userDAO.getUserById(employmentProfile.getUserId())
+        Long userId = employmentProfile.getUser().getUserId();
+
+        userDAO.getUserById(userId)
                 .orElseThrow(() ->
                             new UserNotFoundException("User not found")
                         );
 
-        Optional<EmploymentProfile> employmentProfileOptional =
-                employmentProfileDAO.getEmploymentProfileByUserId(employmentProfile.getUserId());
-        if (employmentProfileOptional.isPresent()) {
-            throw new EmploymentProfileCreationException("User already has employment profile");
+        Optional<EmploymentProfile> existingProfile  =
+                employmentProfileDAO.getEmploymentProfileByUserId(userId);
+
+        if (existingProfile.isPresent()) {
+            throw new EmploymentProfileCreationException(
+                    "User already has employment profile"
+            );
         }
 
         Long employmentProfileId =
@@ -67,7 +77,7 @@ public class EmploymentProfileServiceImpl implements EmploymentProfileService {
         if (employmentProfileId == null) {
             throw new EmploymentProfileCreationException(
                     "Failed to create employment profile for userId: "
-                            + employmentProfile.getUserId()
+                            + userId
             );
         }
 
@@ -81,7 +91,9 @@ public class EmploymentProfileServiceImpl implements EmploymentProfileService {
             throw new InvalidEmploymentProfileDataException("id must not be null");
         }
 
-        Optional<EmploymentProfile> employmentProfileOptional = employmentProfileDAO.getEmploymentProfileById(id);
+        Optional<EmploymentProfile> employmentProfileOptional =
+                employmentProfileDAO.getEmploymentProfileById(id);
+
         if (!employmentProfileOptional.isPresent()) {
             throw new EmploymentProfileNotFoundException("Employment Profile not found");
         }
@@ -95,7 +107,7 @@ public class EmploymentProfileServiceImpl implements EmploymentProfileService {
             throw new InvalidEmploymentProfileDataException("userId must not be null");
         }
 
-        User user = userDAO.getUserById(userId)
+        userDAO.getUserById(userId)
                 .orElseThrow(() ->
                         new UserNotFoundException("User not found")
                 );
@@ -110,12 +122,14 @@ public class EmploymentProfileServiceImpl implements EmploymentProfileService {
 
     @Override
     public boolean updateEmploymentProfile(EmploymentProfile employmentProfile) {
-        if (employmentProfile == null) {
-            throw new InvalidEmploymentProfileDataException("EmploymentProfile must not be null");
+        if (employmentProfile == null ||
+            employmentProfile.getEmploymentProfileId() == null) {
+            throw new InvalidEmploymentProfileDataException(
+                    "Cannot update employment profile: EmploymentProfile or employmentProfileId is null"
+            );
         }
 
-        EmploymentProfile employmentProfileOptional =
-                employmentProfileDAO.getEmploymentProfileById(employmentProfile.getEmploymentProfileId())
+        employmentProfileDAO.getEmploymentProfileById(employmentProfile.getEmploymentProfileId())
                         .orElseThrow(() ->
                                     new EmploymentProfileNotFoundException("Employment Profile not found")
                                 );
@@ -132,11 +146,12 @@ public class EmploymentProfileServiceImpl implements EmploymentProfileService {
     @Override
     public boolean deleteEmploymentProfile(Long employmentProfileId) {
         if (employmentProfileId == null) {
-            throw new  InvalidEmploymentProfileDataException("employmentProfileId must not be null");
+            throw new  InvalidEmploymentProfileDataException(
+                    "employmentProfileId must not be null"
+            );
         }
 
-        EmploymentProfile employmentProfile =
-                employmentProfileDAO.getEmploymentProfileById(employmentProfileId)
+        employmentProfileDAO.getEmploymentProfileById(employmentProfileId)
                         .orElseThrow(() ->
                                     new EmploymentProfileNotFoundException(
                                             "Employment profile not found for id: " + employmentProfileId
@@ -144,8 +159,11 @@ public class EmploymentProfileServiceImpl implements EmploymentProfileService {
                                 );
 
         boolean success = employmentProfileDAO.deleteEmploymentProfile(employmentProfileId);
+
         if (!success) {
-            throw new EmploymentProfileException("Failed to delete employment profile");
+            throw new EmploymentProfileException(
+                    "Failed to delete employment profile"
+            );
         }
 
         return true;

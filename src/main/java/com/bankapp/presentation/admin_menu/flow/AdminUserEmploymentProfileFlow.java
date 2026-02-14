@@ -2,9 +2,11 @@ package com.bankapp.presentation.admin_menu.flow;
 
 import com.bankapp.exception.service_exceptions.employment_profile.EmploymentProfileNotFoundException;
 import com.bankapp.model.EmploymentProfile;
+import com.bankapp.model.User;
 import com.bankapp.presentation.input.ConsoleReader;
 import com.bankapp.presentation.input.GetUserInput;
 import com.bankapp.service.EmploymentProfileService;
+import com.bankapp.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,16 +14,32 @@ import java.util.Optional;
 public class AdminUserEmploymentProfileFlow {
 
     private final EmploymentProfileService employmentProfileService;
+    private final UserService userService;
 
     public AdminUserEmploymentProfileFlow(
-            EmploymentProfileService employmentProfileService
+            EmploymentProfileService employmentProfileService,
+            UserService userService
     ) {
 
         this.employmentProfileService = employmentProfileService;
+        this.userService = userService;
     }
 
     public void createEmploymentProfile() {
-        EmploymentProfile employmentProfile = GetUserInput.getEmploymentProfile(true);
+
+        System.out.print("\nEnter User ID: ");
+        Long userId = ConsoleReader.readLong();
+
+        Optional<User> userOptional = userService.getUserById(userId);
+        if (!userOptional.isPresent()) {
+            System.out.println("User with ID: " + userId + " not found\n");
+            return;
+        }
+
+        User user = userOptional.get();
+
+        EmploymentProfile employmentProfile = GetUserInput.getEmploymentProfile();
+        employmentProfile.setUser(user);
 
         try {
             Long employmentProfileId = employmentProfileService.createEmploymentProfile(employmentProfile);
@@ -68,13 +86,27 @@ public class AdminUserEmploymentProfileFlow {
         System.out.print("\nEnter Employment Profile ID: ");
         Long employmentProfileId = ConsoleReader.readLong();
 
-        EmploymentProfile newEmploymentProfile = GetUserInput.getEmploymentProfile(false);
-        if (newEmploymentProfile != null) {
-            newEmploymentProfile.setEmploymentProfileId(employmentProfileId);
-        }
-
         try {
-            boolean updated = employmentProfileService.updateEmploymentProfile(newEmploymentProfile);
+            Optional<EmploymentProfile> optional =
+                    employmentProfileService.getEmploymentProfileById(employmentProfileId);
+
+            if (!optional.isPresent()) {
+                System.out.println("Employment Profile not found\n");
+                return;
+            }
+
+            EmploymentProfile existing = optional.get();
+
+            EmploymentProfile input = GetUserInput.getEmploymentProfile();
+
+            if (input != null) {
+                existing.setOccupation(input.getOccupation());
+                existing.setAnnualIncome(input.getAnnualIncome());
+                existing.setSourceOfFunds(input.getSourceOfFunds());
+                existing.setAccountPurpose(input.getAccountPurpose());
+            }
+
+            boolean updated = employmentProfileService.updateEmploymentProfile(existing);
             if (updated) {
                 System.out.println("Employment Profile updated successfully");
             } else  {

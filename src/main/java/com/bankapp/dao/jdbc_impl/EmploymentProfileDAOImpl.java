@@ -1,4 +1,4 @@
-package com.bankapp.dao.impl;
+package com.bankapp.dao.jdbc_impl;
 
 import com.bankapp.config.DBConnectionPoolUtil;
 import com.bankapp.dao.EmploymentProfileDAO;
@@ -33,7 +33,13 @@ public class EmploymentProfileDAOImpl implements EmploymentProfileDAO {
     }
 
     @Override
-    public Long createEmploymentProfile(EmploymentProfile employmentProfile, Connection connection) {
+    public Long createEmploymentProfile(EmploymentProfile employmentProfile, Object persistenceContext) {
+        if (!(persistenceContext instanceof Connection)) {
+            throw new IllegalArgumentException("Expected JDBC Connection");
+        }
+
+        Connection connection = (Connection) persistenceContext;
+
         if (employmentProfile == null) {
             logger.warning("Cannot create employment profile: EmploymentProfile is null");
             return null;
@@ -194,7 +200,8 @@ public class EmploymentProfileDAOImpl implements EmploymentProfileDAO {
             return null;
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            logger.log(Level.SEVERE, "Database error while fetching employment profile with userId: " + userId, e);
+            throw new EmploymentProfileAccessException("Error fetching employment profile for userId" + userId, e);
         }
     }
 

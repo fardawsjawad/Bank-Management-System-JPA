@@ -12,6 +12,7 @@ public interface TransactionDAO {
 
     // CREATE
     Long createTransaction(Transaction transaction);
+    Long createTransaction(Transaction transaction, Object persistenceContext);
 
     // RETRIEVE
     Optional<Transaction> getTransactionById(Long id);

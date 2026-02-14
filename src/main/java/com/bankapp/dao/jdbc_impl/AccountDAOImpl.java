@@ -1,4 +1,4 @@
-package com.bankapp.dao.impl;
+package com.bankapp.dao.jdbc_impl;
 
 import com.bankapp.config.DBConnectionPoolUtil;
 import com.bankapp.dao.AccountDAO;
@@ -27,6 +27,7 @@ public class AccountDAOImpl implements AccountDAO {
             logger.warning("Cannot create account: Account or AccountOwnerId is null");
             return null;
         }
+
         try (Connection connection = DBConnectionPoolUtil.getConnection();
              PreparedStatement preparedStatement =
                      connection.prepareStatement(

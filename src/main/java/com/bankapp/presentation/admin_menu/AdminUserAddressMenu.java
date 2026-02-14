@@ -4,6 +4,7 @@ import com.bankapp.presentation.admin_menu.flow.AdminUserAddressFlow;
 import com.bankapp.presentation.admin_menu.flow.AdminUserFlow;
 import com.bankapp.presentation.input.ConsoleReader;
 import com.bankapp.service.UserAddressService;
+import com.bankapp.service.UserService;
 import com.bankapp.util.LogoutUser;
 
 public class AdminUserAddressMenu {
@@ -11,10 +12,11 @@ public class AdminUserAddressMenu {
     private final AdminUserAddressFlow adminUserAddressFlow;
 
     public AdminUserAddressMenu(
-            UserAddressService userAddressService
+            UserAddressService userAddressService,
+            UserService userService
     ) {
 
-        this.adminUserAddressFlow = new AdminUserAddressFlow(userAddressService);
+        this.adminUserAddressFlow = new AdminUserAddressFlow(userAddressService, userService);
     }
 
     public void display() {

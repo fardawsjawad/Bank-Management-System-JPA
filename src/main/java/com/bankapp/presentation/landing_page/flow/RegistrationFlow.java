@@ -33,8 +33,8 @@ public class RegistrationFlow {
     public void registerUser() {
 
         User user = GetUserInput.getUser(false);
-        UserAddress userAddress = GetUserInput.getUserAddress(false);
-        EmploymentProfile employmentProfile = GetUserInput.getEmploymentProfile(false);
+        UserAddress userAddress = GetUserInput.getUserAddress();
+        EmploymentProfile employmentProfile = GetUserInput.getEmploymentProfile();
 
         try {
             Long userId = userService.createUser(
@@ -55,6 +55,7 @@ public class RegistrationFlow {
                 UserAlreadyExistsException |
                 UserCreationException exception
         ) {
+            exception.printStackTrace();
             System.out.println(exception.getMessage() + "\n");
         }
 

@@ -4,12 +4,10 @@ import com.bankapp.exception.service_exceptions.user_service.EmailAddressNotFoun
 import com.bankapp.exception.service_exceptions.user_service.InvalidUserDataException;
 import com.bankapp.model.User;
 import com.bankapp.presentation.input.ConsoleReader;
-import com.bankapp.security.PasswordHasher;
 import com.bankapp.service.UserService;
 import com.bankapp.util.EmailSender;
 import com.bankapp.validation.UserValidator;
 
-import java.util.Optional;
 import java.util.Random;
 
 public class ForgotPasswordFlow {
@@ -52,7 +50,7 @@ public class ForgotPasswordFlow {
 
             boolean updated = userService.updateUserPassword(
                     user.getUserId(),
-                    PasswordHasher.hashPassword(newPassword)
+                    newPassword
             );
 
             if (updated) {

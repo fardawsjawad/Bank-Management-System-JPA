@@ -1,33 +1,106 @@
 package com.bankapp.model;
 
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = {
+        "userAddresses",
+        "role",
+        "employmentProfile",
+        "userRole",
+        "accounts",
+        "passwordHash"
+})
 public class User {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
+    @EqualsAndHashCode.Include
     private Long userId;
-    private String username;
-    private String passwordHash;
-    private String firstName;
-    private String lastName;
-    private LocalDate dateOfBirth;
-    private Gender gender;
-    private String email;
-    private String nationality;
-    private String passportNumber;
-    private String phoneNumber;
-    private List<UserAddress> userAddresses;
-    private Role role;
-    private EmploymentProfile employmentProfiles;
 
-    public  User() {
-    }
+    @Column(name = "username", unique = true, nullable = false, length = 100,
+            insertable = false, updatable = false)
+    private String username;
+
+    @Column(name = "password", nullable = false, length = 200)
+    private String passwordHash;
+
+    @Column(name = "first_name", nullable = false, length = 50)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false, length = 50)
+    private String lastName;
+
+    @Column(name = "date_of_birth", nullable = false)
+    private LocalDate dateOfBirth;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender", nullable = false)
+    private Gender gender;
+
+    @Column(name = "email_address", unique = true, nullable = false, length = 100)
+    private String email;
+
+    @Column(name = "nationality", nullable = false, length = 100)
+    private String nationality;
+
+    @Column(name = "passport_number", unique = true, nullable = false, length = 50)
+    private String passportNumber;
+
+    @Column(name = "phone_number", unique = true, nullable = false, length = 15)
+    private String phoneNumber;
+
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch =  FetchType.LAZY
+    )
+    private List<UserAddress> userAddresses = new ArrayList<>();
+
+    @Transient
+    private Role role;
+
+    @Setter(AccessLevel.NONE)
+    @OneToOne(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private UserRole userRole;
+
+    @Setter(AccessLevel.NONE)
+    @OneToOne(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private EmploymentProfile employmentProfile;
+
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private Set<Account> accounts = new HashSet<>();
 
     public User(Long userId, String username, String passwordHash, String firstName, String lastName,
                 LocalDate dateOfBirth, Gender gender, String email, String nationality, String passportNumber,
-                String phoneNumber, List<UserAddress> userAddresses, Role role, EmploymentProfile employmentProfiles) {
+                String phoneNumber, List<UserAddress> userAddresses, Role role, EmploymentProfile employmentProfile) {
 
         this.userId = userId;
         this.username = username;
@@ -42,7 +115,7 @@ public class User {
         this.phoneNumber = phoneNumber;
         this.userAddresses = userAddresses;
         this.role = role;
-        this.employmentProfiles = employmentProfiles;
+        this.employmentProfile = employmentProfile;
     }
 
     public User(Long userId, String username, String firstName, String lastName,
@@ -90,146 +163,52 @@ public class User {
         this.phoneNumber = phoneNumber;
     }
 
-    public Long getUserId() {
-        return userId;
+    public void setEmploymentProfile(EmploymentProfile profile) {
+        this.employmentProfile = profile;
+
+        if (profile != null) {
+            profile.setUser(this);
+        }
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+
+    public void addAddress(UserAddress address) {
+        userAddresses.add(address);
+        address.setUser(this);
     }
 
-    public String getUsername() {
-        return username;
+    public void removeAddress(UserAddress address) {
+        userAddresses.remove(address);
+        address.setUser(null);
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public void setUserRole(UserRole userRole) {
+        this.userRole = userRole;
 
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public Gender getGender() {
-        return gender;
-    }
-
-    public void setGender(Gender gender) {
-        this.gender = gender;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getNationality() {
-        return nationality;
-    }
-
-    public void setNationality(String nationality) {
-        this.nationality = nationality;
-    }
-
-    public String getPassportNumber() {
-        return passportNumber;
-    }
-
-    public void setPassportNumber(String passportNumber) {
-        this.passportNumber = passportNumber;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public List<UserAddress> getUserAddresses() {
-        return userAddresses;
-    }
-
-    public void setUserAddresses(List<UserAddress> userAddresses) {
-        this.userAddresses = userAddresses;
-    }
-
-    public Role getRole() {
-        return role;
+        if (userRole != null) {
+            userRole.setUser(this);
+            this.role = userRole.getUserRole();
+        } else {
+            this.role = null;
+        }
     }
 
     public void setRole(Role role) {
         this.role = role;
+
+        if (role != null && this.userRole != null) {
+            this.userRole.setUserRole(role);
+        }
     }
 
-    public EmploymentProfile getEmploymentProfile() {
-        return employmentProfiles;
+    public void addAccount(Account account) {
+        accounts.add(account);
+        account.setUser(this);
     }
 
-    public void setEmploymentProfile(EmploymentProfile employmentProfiles) {
-        this.employmentProfiles = employmentProfiles;
+    public void removeAccount(Account account) {
+        accounts.remove(account);
+        account.setUser(null);
     }
 
-    @Override
-    public String toString() {
-        return "User {\n" +
-                "  userId = " + userId + ",\n" +
-                "  username = '" + username + "',\n" +
-                "  firstName = '" + firstName + "',\n" +
-                "  lastName = '" + lastName + "',\n" +
-                "  dateOfBirth = " + dateOfBirth + ",\n" +
-                "  gender = " + gender + ",\n" +
-                "  email = '" + email + "',\n" +
-                "  nationality = '" + nationality + "',\n" +
-                "  passportNumber = '" + passportNumber + "',\n" +
-                "  phoneNumber = '" + phoneNumber + "',\n" +
-                "  userAddresses = '" + userAddresses + "',\n" +
-                "  employmentProfiles = '" + employmentProfiles + "',\n" +
-                "  role = " + role + "\n" +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return userId == user.userId;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(userId);
-    }
 }

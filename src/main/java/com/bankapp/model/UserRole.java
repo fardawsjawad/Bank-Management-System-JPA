@@ -1,10 +1,41 @@
 package com.bankapp.model;
 
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Table(name = "roles")
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = {"user"})
 public class UserRole {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @Column(name = "role_id")
     private Long roleId;
+
+    @Column(
+            name = "user_id",
+            insertable = false,
+            updatable = false
+    )
     private Long userId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_role", nullable = false)
     private Role userRole;
+
+    @OneToOne
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            unique = true
+    )
+    private User user;
 
     public UserRole(Long roleId, Long userId, Role userRole) {
         this.roleId = roleId;
@@ -17,36 +48,12 @@ public class UserRole {
         this.userRole = userRole;
     }
 
-    public Long getRoleId() {
-        return roleId;
+    @PrePersist
+    @PreUpdate
+    private void syncUserId() {
+        if (user != null) {
+            this.userId = user.getUserId();
+        }
     }
 
-    public void setRoleId(Long roleId) {
-        this.roleId = roleId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public Role getUserRole() {
-        return userRole;
-    }
-
-    public void setUserRole(Role userRole) {
-        this.userRole = userRole;
-    }
-
-    @Override
-    public String toString() {
-        return "UserRole{" +
-                "roleId=" + roleId +
-                ", userId=" + userId +
-                ", userRole=" + userRole +
-                '}';
-    }
 }

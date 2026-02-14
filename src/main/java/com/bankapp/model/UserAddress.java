@@ -1,23 +1,59 @@
 package com.bankapp.model;
 
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.util.Objects;
 
+@Entity
+@Table(name = "useraddress")
+@Getter
+@Setter
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = {"user"})
 public class UserAddress {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "address_id")
+    @EqualsAndHashCode.Include
     private Long addressId;
+
+    @Column(name = "user_id",  nullable = false, insertable = false, updatable = false)
     private Long userId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "address_type", nullable = false)
     private AddressType  addressType;
+
+    @Column(name = "address_line_1",  nullable = false)
     private String addressLine1;
+
+    @Column(name = "address_line_2")
     private String addressLine2;
+
+    @Column(name = "locality")
     private String locality;
+
+    @Column(name = "city", nullable = false)
     private String city;
+
+    @Column(name = "district")
     private String district;
+
+    @Column(name = "state_or_province", nullable = false)
     private String stateOrProvince;
+
+    @Column(name = "postal_code", nullable = false, length = 20)
     private String postalCode;
+
+    @Column(name = "country", nullable = false, length = 50)
     private String country;
 
-    public UserAddress() {
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     public UserAddress(Long addressId, Long userId, AddressType addressType, String addressLine1,
                        String addressLine2, String locality, String city, String district,
@@ -62,7 +98,6 @@ public class UserAddress {
         this.addressLine2 = addressLine2;
         this.locality = locality;
         this.city = city;
-        this.district = null;
         this.stateOrProvince = stateOrProvince;
         this.postalCode = postalCode;
         this.country = country;
@@ -72,13 +107,11 @@ public class UserAddress {
                        String locality, String city, String stateOrProvince,
                        String postalCode, String country) {
 
-        this.userId = userId;
         this.addressType = addressType;
         this.addressLine1 = addressLine1;
         this.addressLine2 = addressLine2;
         this.locality = locality;
         this.city = city;
-        this.district = null;
         this.stateOrProvince = stateOrProvince;
         this.postalCode = postalCode;
         this.country = country;
@@ -88,7 +121,6 @@ public class UserAddress {
                        String locality, String city, String district, String stateOrProvince,
                        String postalCode, String country) {
 
-        this.userId = userId;
         this.addressType = addressType;
         this.addressLine1 = addressLine1;
         this.addressLine2 = addressLine2;
@@ -100,120 +132,4 @@ public class UserAddress {
         this.country = country;
     }
 
-    public Long getAddressId() {
-        return addressId;
-    }
-
-    public void setAddressId(Long addressId) {
-        this.addressId = addressId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public AddressType getAddressType() {
-        return addressType;
-    }
-
-    public void setAddressType(AddressType addressType) {
-        this.addressType = addressType;
-    }
-
-    public String getAddressLine1() {
-        return addressLine1;
-    }
-
-    public void setAddressLine1(String addressLine1) {
-        this.addressLine1 = addressLine1;
-    }
-
-    public String getAddressLine2() {
-        return addressLine2;
-    }
-
-    public void setAddressLine2(String addressLine2) {
-        this.addressLine2 = addressLine2;
-    }
-
-    public String getLocality() {
-        return locality;
-    }
-
-    public void setLocality(String locality) {
-        this.locality = locality;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getDistrict() {
-        return district;
-    }
-
-    public void setDistrict(String district) {
-        this.district = district;
-    }
-
-    public String getStateOrProvince() {
-        return stateOrProvince;
-    }
-
-    public void setStateOrProvince(String stateOrProvince) {
-        this.stateOrProvince = stateOrProvince;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    @Override
-    public String toString() {
-        return "UserAddress{" +
-                "addressId=" + addressId +
-                "userId=" + (userId != null ? userId : null) +
-                ", addressType=" + addressType +
-                ", addressLine1='" + addressLine1 + '\'' +
-                ", addressLine2='" + addressLine2 + '\'' +
-                ", locality='" + locality + '\'' +
-                ", city='" + city + '\'' +
-                ", district='" + district + '\'' +
-                ", stateOrProvince='" + stateOrProvince + '\'' +
-                ", postalCode='" + postalCode + '\'' +
-                ", country='" + country + '\'' +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        UserAddress that = (UserAddress) o;
-        return Objects.equals(addressId, that.addressId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(addressId);
-    }
 }

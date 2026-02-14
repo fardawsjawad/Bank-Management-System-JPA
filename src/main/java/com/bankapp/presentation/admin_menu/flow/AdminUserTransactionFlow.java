@@ -67,7 +67,7 @@ public class AdminUserTransactionFlow {
 
         try {
             List<Transaction> transactions =  transactionService.getTransactionsByDateRange(accountId, startDate, endDate);
-            if (transactions != null && transactions.isEmpty()) {
+            if ((transactions != null) && (!transactions.isEmpty())) {
                 printTransactionList(transactions);
             } else {
                 System.out.println("No transactions found");
